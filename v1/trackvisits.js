@@ -1,54 +1,91 @@
-// Replace 'YOUR_BOT_TOKEN' and 'YOUR_CHAT_ID' with your actual bot token and chat ID
-const botToken = '6855237376:AAFuMStmnVv6TxgTJxSOgZbthGoni2nSAIg';
-const chatId = '5816023717';
-
-// Function to send a message to the Telegram bot
-function notifyTelegram(message) {
-  const apiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
-  const params = new URLSearchParams({
-    chat_id: chatId,
-    text: message,
-  });
-
-  // Use the Fetch API to send a POST request to the Telegram API
-  fetch(`${apiUrl}?${params}`, {
-    method: 'POST',
-  })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Failed to send notification');
-      }
-    })
-    .catch(error => console.error('Notification error:', error));
-}
-
-// Function to get user agent information
-function getUserAgentInfo() {
-  return navigator.userAgent;
-}
-
-// Function to throttle notifications
-let lastNotificationTime = 0;
-const notificationInterval = 30000; // 30 seconds
-
-// Send a notification when the page is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  const currentTime = new Date().getTime();
-  if (currentTime - lastNotificationTime > notificationInterval) {
-    const currentPageUrl = window.location.href;
-    const userAgentInfo = getUserAgentInfo();
-    const notificationMessage = `User visited: ${currentPageUrl}\nUser Agent: ${userAgentInfo}`;
-    notifyTelegram(notificationMessage);
-    lastNotificationTime = currentTime;
+// Function to generate a random dummy username
+function generateDummyUsername() {
+    const adjectives = ['Happy', 'Sad', 'Funny', 'Clever', 'Silly'];
+    const nouns = ['Penguin', 'Elephant', 'Banana', 'Rocket', 'Sunshine'];
+  
+    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+  
+    return `${randomAdjective}${randomNoun}`;
   }
-});
+  
+  // Function to get or initialize the user data
+  function getUserData() {
+    const storedData = localStorage.getItem('userData');
+    return storedData ? JSON.parse(storedData) : {};
+  }
+  
+  // Function to prompt user for email and validate
+  function promptForEmail() {
+    const userData = getUserData();
+  
+    // If the user has already provided an email, use it
+    if (userData.email) {
+      return userData;
+    }
+  
+    let isValidEmail = false;
+    let userEmail;
+  
+    while (!isValidEmail) {
+      userEmail = prompt('Enter your email:');
+  
+      if (userEmail === null) {
+        // User canceled the prompt
+        userData.username = generateDummyUsername();
+        break;
+      }
+  
+      // Simple email validation
+      isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail);
+  
+      if (!isValidEmail) {
+        alert('Invalid email format. Please try again.');
+      }
+    }
+  
+    if (isValidEmail) {
+      userData.email = userEmail;
+      // Save the updated user data
+      localStorage.setItem('userData', JSON.stringify(userData));
+    }
+  
+    return userData;
+  }
+  
+  // Function to update and save user data
+  function updateUserStats() {
+    const userData = promptForEmail();
+    const currentPageUrl = window.location.href;
+  
+    // Increment visit count for the current page
+    userData[currentPageUrl] = (userData[currentPageUrl] || 0) + 1;
+  
+    // Save the updated user data
+    localStorage.setItem('userData', JSON.stringify(userData));
+  
+    // Notify Telegram with user information
+    const notificationMessage = `User ${userData.email || userData.username} visited ${currentPageUrl} (${userData[currentPageUrl]} times)`;
+    notifyTelegram(notificationMessage);
+  }
+  
+  // Function to send a message to the Telegram bot
+  function notifyTelegram(message) {
+    const botToken = '6855237376:AAFuMStmnVv6TxgTJxSOgZbthGoni2nSAIg';
+const chatId = '5816023717';
+    const apiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const params = new URLSearchParams({
+      chat_id: chatId,
+      text: message,
+    });
+  
+    // Use the Fetch API to send a POST request to the Telegram API
+    fetch(`${apiUrl}?${params}`, {
+      method: 'POST',
+    });
+  }
+  
+  // Send a notification when the page is loaded
+  document.addEventListener('DOMContentLoaded', updateUserStats);
 
-// Example for tracking button click
-const buttonElement = document.getElementById('myButton');
-
-if (buttonElement) {
-  buttonElement.addEventListener('click', () => {
-    const buttonClickMessage = 'User clicked the button';
-    notifyTelegram(buttonClickMessage);
-  });
-}
+      
